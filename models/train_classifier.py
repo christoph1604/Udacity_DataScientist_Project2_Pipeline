@@ -1,12 +1,47 @@
 import sys
+import pandas as pd
+import nltk
+import re
 
+from sqlalchemy import create_engine
+from sklearn.pipeline import Pipeline
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from nltk.stem import WordNetLemmatizer
+from sklearn.metrics import classification_report
+
+nltk.download(["punkt", "wordnet"])
+url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def load_data(database_filepath):
-    pass
+    engine = create_engine('sqlite:///'+database_filepath )
+    df = pd.read_sql_table("MessageData", engine)
+    
+    X = df.message
+    Y = df.loc[:, "related":"direct_report"]
+    category_names=Y.columns
+    
+    return X, Y, category_names
 
 
 def tokenize(text):
-    pass
+    found_urls=re.findall(url_regex, text)
+    for pos in found_urls:
+        text=text.replace(pos, "urlplaceholder")
+    text=re.sub(r"[^a-zA-Z0-9]", " ", text) 
+    text=text.lower()
+    words=nltk.word_tokenize(text)
+    
+    lemmatizer = WordNetLemmatizer()
+    clean_tokens = []
+    for w in words:
+        tok=lemmatizer.lemmatize(w).lower().strip()
+        clean_tokens.append(tok)
+        
+    return clean_tokens
 
 
 def build_model():
