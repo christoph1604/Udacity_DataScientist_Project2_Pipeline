@@ -1,7 +1,10 @@
+# import libraries
 import sys
 import pandas as pd
 import nltk
 import re
+import sklearn as sk
+import pickle
 
 from sqlalchemy import create_engine
 from sklearn.pipeline import Pipeline
@@ -12,6 +15,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from nltk.stem import WordNetLemmatizer
 from sklearn.metrics import classification_report
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import GridSearchCV
 
 nltk.download(["punkt", "wordnet"])
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -45,16 +50,45 @@ def tokenize(text):
 
 
 def build_model():
-    pass
+    pipeline = Pipeline([
+        ("vect", CountVectorizer(tokenizer=tokenize)),
+        ("tfidf", TfidfTransformer()),
+        ('moclf', MultiOutputClassifier(RandomForestClassifier()))
+    ])
+    
+    parameters = {
+        "moclf__estimator__criterion": ["gini", "entropy"],
+        "moclf__estimator__max_depth": [5, 10, None]    
+    }
+    
+    #cv = GridSearchCV(pipeline, param_grid=parameters)
+    
+    return pipeline
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    Y_pred=pd.DataFrame(model.predict(X_test))
+    Y_pred.columns=category_names
+    
+    #print("Best parameters: ", model.best_params_)
+    
+    Y_test=Y_test.reset_index(drop=True)
+    acc_avg=0
+    for col in category_names:    
+        accuracy_col=(Y_test[col]==Y_pred[col]).mean()
+        acc_avg=acc_avg+accuracy_col
+    print("Avg. accuracy: ", acc_avg/len(category_names)) 
+    
+    for col in category_names:
+        print(col)
+        report=classification_report(Y_test[col], Y_pred[col])
+        print(report)
 
 
 def save_model(model, model_filepath):
-    pass
-
+    file = open(model_filepath, "wb")
+    s = pickle.dump(model, file)
+    file.close()
 
 def main():
     if len(sys.argv) == 3:
