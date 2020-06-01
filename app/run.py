@@ -26,10 +26,19 @@ def tokenize(text):
     return clean_tokens
 
 # load data
+
+# Version for Heroku (starts skript from top folder)
+# engine = create_engine('sqlite:///data/DisasterResponse.db')
+
+# Version for local execution (starts script from app folder)
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('MessageData', engine)
 
 # load model
+# Version for Heroku (starts skript from top folder)
+#model = joblib.load("models/classifier.pkl")
+
+# Version for local execution (starts script from app folder)
 model = joblib.load("../models/classifier.pkl")
 
 
