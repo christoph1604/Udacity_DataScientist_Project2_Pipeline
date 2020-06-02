@@ -33,24 +33,6 @@ def load_data(database_filepath):
     
     return X, Y, category_names
 
-
-def tokenize(text):
-    found_urls=re.findall(url_regex, text)
-    for pos in found_urls:
-        text=text.replace(pos, "urlplaceholder")
-    text=re.sub(r"[^a-zA-Z0-9]", " ", text) 
-    text=text.lower()
-    words=nltk.word_tokenize(text)
-    
-    lemmatizer = WordNetLemmatizer()
-    clean_tokens = []
-    for w in words:
-        tok=lemmatizer.lemmatize(w).lower().strip()
-        clean_tokens.append(tok)
-        
-    return clean_tokens
-
-
 def build_model():
     pipeline = Pipeline([
         ("vect", CountVectorizer(tokenizer=tokenize)),
