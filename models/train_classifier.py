@@ -18,6 +18,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import GridSearchCV
 
+from scripts import tokenize
+
 nltk.download(["punkt", "wordnet"])
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
