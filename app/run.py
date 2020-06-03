@@ -1,6 +1,7 @@
 import json
 import plotly
 import pandas as pd
+import math
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -8,10 +9,11 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
+from plotly.graph_objs import Pie
 import joblib
 from sqlalchemy import create_engine
 
-from scripts.scripts import tokenize
+from scripts import tokenize
 
 
 app = Flask(__name__)
@@ -43,9 +45,67 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    cat_number=df.loc[:, "related":"direct_report"].sum(axis=0).reset_index()
+    cat_number.columns=["category", "count"]
+    cat_number=cat_number.sort_values(by="count")
+    
+    
+    df["letter_count"]=df.message.str.len()
+    cat_strlen_l=[]
+    categories=df.loc[:, "related":"direct_report"].columns
+    for cat in categories:
+        avg_strlen=df[df[cat]==1].letter_count.mean()
+        if(math.isnan(avg_strlen)):
+            avg_strlen=0
+        cat_strlen_l.append({"category": cat, "avg_strlen": avg_strlen})
+    cat_strlen=pd.DataFrame(cat_strlen_l)
+    cat_strlen=cat_strlen.sort_values("avg_strlen")    
+    
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
+        {
+            "data": [
+                Pie(
+                    values=cat_number["count"],
+                    labels=cat_number["category"]
+                )            
+            ],
+            
+            "layout": {
+                "title": "Distribution of Message Categories in Training Set",
+                "width": "1000",
+                "height": "625",
+                "autosize": False,                
+            
+            }
+        },
+        
+        {
+            "data": [
+                Bar(
+                    x=cat_strlen.avg_strlen,
+                    y=cat_strlen.category,
+                    orientation="h"
+                )            
+            ],
+            
+            "layout": {
+                "title": "Average message length by category",
+                "width": "1000",
+                "height": "1000",
+                'yaxis': {
+                    'title': "Category"
+                },
+                'xaxis': {
+                    'title': "Average message length (in letters)"
+                }            
+            
+            }
+        },         
+        
+        
+        
         {
             'data': [
                 Bar(
@@ -64,6 +124,7 @@ def index():
                 }
             }
         }
+ 
     ]
     
     # encode plotly graphs in JSON
