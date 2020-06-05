@@ -27,6 +27,9 @@ def clean_data(df):
         # convert column from string to numeric
         categories[column] = pd.to_numeric(categories[column], downcast="integer")
         
+        # assure binary values (either 0 or 1)
+        categories.loc[categories[column]!=0, column]=1
+        
     df.drop(["categories"], axis=1, inplace=True)
     
     df.reset_index(drop=True, inplace=True)

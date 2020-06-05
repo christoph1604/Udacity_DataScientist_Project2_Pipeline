@@ -99,7 +99,10 @@ def index():
                 },
                 'xaxis': {
                     'title': "Average message length (in letters)"
-                }            
+                }, 
+                "margin": {
+                    "l": 200
+                }
             
             }
         },         
