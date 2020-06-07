@@ -1,6 +1,9 @@
 import re
 import nltk
+
 from nltk.stem import WordNetLemmatizer
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
