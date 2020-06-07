@@ -1,10 +1,11 @@
 # import libraries
-import sys
 import pandas as pd
 import nltk
 import re
 import sklearn as sk
+import math
 import pickle
+import matplotlib.pyplot as plt
 
 from sqlalchemy import create_engine
 from sklearn.pipeline import Pipeline
@@ -13,14 +14,20 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.metrics import classification_report
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import GridSearchCV
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
+from sklearn.pipeline import FeatureUnion
 
 from scripts import tokenize
+from scripts import StartingVerbExtractor
+from scripts import TextLengthExtractor
 
-nltk.download(["punkt", "wordnet"])
+nltk.download(["punkt", "wordnet", "stopwords", "averaged_perceptron_tagger"])
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def load_data(database_filepath):
@@ -34,34 +41,37 @@ def load_data(database_filepath):
     return X, Y, category_names
 
 def build_model():
+
     pipeline = Pipeline([
-        ("vect", CountVectorizer(tokenizer=tokenize)),
-        ("tfidf", TfidfTransformer()),
+        ("features", FeatureUnion([
+            ("nlp_pipeline", Pipeline([
+                ("vect", CountVectorizer(tokenizer=tokenize)),
+                ("tfidf", TfidfTransformer())
+            ])),
+            ("txt_len", TextLengthExtractor()),
+            ("sve", StartingVerbExtractor())        
+        ])),        
         ('moclf', MultiOutputClassifier(RandomForestClassifier()))
     ])
     
     parameters = {
-        "moclf__estimator__criterion": ["gini", "entropy"],
+        "moclf__estimator__n_estimators": [10,100],
         "moclf__estimator__max_depth": [5, 10, None]    
     }
     
-    #cv = GridSearchCV(pipeline, param_grid=parameters)
+    cv = GridSearchCV(pipeline, param_grid=parameters)
     
-    return pipeline
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
     Y_pred=pd.DataFrame(model.predict(X_test))
     Y_pred.columns=category_names
     
-    #print("Best parameters: ", model.best_params_)
+    print("Best parameters: ", model.best_params_)
     
     Y_test=Y_test.reset_index(drop=True)
-    acc_avg=0
-    for col in category_names:    
-        accuracy_col=(Y_test[col]==Y_pred[col]).mean()
-        acc_avg=acc_avg+accuracy_col
-    print("Avg. accuracy: ", acc_avg/len(category_names)) 
+    print("Avg. accuracy: ", (Y_pred==Y_test).mean().mean()) 
     
     for col in category_names:
         print(col)
