@@ -35,6 +35,7 @@ df = pd.read_sql_table('MessageData', engine)
 # Version for local execution (starts script from app folder)
 model = joblib.load("../models/classifier.pkl")
 
+# index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
@@ -42,8 +43,7 @@ def index():
     Index webpage. Displays visualizations and receives user input text for model
     """
     
-    # extract data needed for visuals
-    
+    # extract data needed for visuals    
     # Visualization 1: Frequency of categories
     cat_number=df.loc[:, "related":"direct_report"].sum(axis=0).reset_index()
     cat_number.columns=["category", "count"]
