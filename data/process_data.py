@@ -3,8 +3,10 @@ import sys
 import pandas as pd
 from sqlalchemy import create_engine
 
-
 def load_data(messages_filepath, categories_filepath):
+"""
+Loads message and category data from specified paths and merges them.
+"""
     messages = pd.read_csv(messages_filepath)
     messages = messages[~messages.id.duplicated()]
     
@@ -15,6 +17,13 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
+"""
+Cleans the loaded dataset. 
+Executes the following tasks:
+- Splits category labels
+- Transforms category labels to binary indicators (0 or 1, integer)
+- Removes duplicates
+"""
     categories = df.categories.str.split(pat=";", expand=True)
     row = categories.iloc[0]
     category_colnames = row.apply(lambda str: str[0:-2])
@@ -41,11 +50,20 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+"""
+Saves the Pandas dataframe to an sqllite database under given path (in table 'MessageData').
+"""
     engine = create_engine('sqlite:///'+database_filename)
     df.to_sql('MessageData', engine, index=False)
 
 
 def main():
+"""
+Main method. Executes the following tasks:
+- Loading of data files
+- Cleaning of data
+- Saving of data to sqllite database.
+"""
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]

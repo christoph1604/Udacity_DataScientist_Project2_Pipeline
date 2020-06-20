@@ -1,21 +1,21 @@
+# Imports
 import json
 import plotly
 import pandas as pd
 import math
+import joblib
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 from plotly.graph_objs import Pie
-import joblib
 from sqlalchemy import create_engine
 
 from scripts import tokenize
 
-
+# Create Flask app
 app = Flask(__name__)
 
 # load data
@@ -28,28 +28,28 @@ engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('MessageData', engine)
 
 # load model
+
 # Version for Heroku (starts skript from top folder)
 #model = joblib.load("models/classifier.pkl")
 
 # Version for local execution (starts script from app folder)
 model = joblib.load("../models/classifier.pkl")
 
-
-# index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
+    """
+    Index webpage. Displays visualizations and receives user input text for model
+    """
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
-    genre_counts = df.groupby('genre').count()['message']
-    genre_names = list(genre_counts.index)
     
+    # Visualization 1: Frequency of categories
     cat_number=df.loc[:, "related":"direct_report"].sum(axis=0).reset_index()
     cat_number.columns=["category", "count"]
     cat_number=cat_number.sort_values(by="count")
     
-    
+    # Visualization 2: Average length of message string by category
     df["letter_count"]=df.message.str.len()
     cat_strlen_l=[]
     categories=df.loc[:, "related":"direct_report"].columns
@@ -61,9 +61,13 @@ def index():
     cat_strlen=pd.DataFrame(cat_strlen_l)
     cat_strlen=cat_strlen.sort_values("avg_strlen")    
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
+    # Visualization 3: Frequency of genres
+    genre_counts = df.groupby('genre').count()['message']
+    genre_names = list(genre_counts.index)
+        
+    # Create visualizations
     graphs = [
+        # Visualization 1: Frequency of categories in a pie chart
         {
             "data": [
                 Pie(
@@ -81,6 +85,7 @@ def index():
             }
         },
         
+        # Visualization 2: Average length of message string by category in a horizontal bar chart
         {
             "data": [
                 Bar(
@@ -105,10 +110,9 @@ def index():
                 }
             
             }
-        },         
+        },        
         
-        
-        
+        # Visualization 3: Frequency of genres
         {
             'data': [
                 Bar(
@@ -138,9 +142,12 @@ def index():
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
 
-# web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    """
+    Web page that handles user query and displays model results.
+    """    
+    
     # save user input in query
     query = request.args.get('query', '') 
 
@@ -157,6 +164,9 @@ def go():
 
 
 def main():
+    """
+    Main method. Runs application on predefined IP / port
+    """
     app.run(host='0.0.0.0', port=3001, debug=True)
 
 

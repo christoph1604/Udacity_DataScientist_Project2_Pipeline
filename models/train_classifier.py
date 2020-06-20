@@ -1,4 +1,5 @@
 # import libraries
+import sys
 import pandas as pd
 import nltk
 import re
@@ -28,9 +29,14 @@ from scripts import StartingVerbExtractor
 from scripts import TextLengthExtractor
 
 nltk.download(["punkt", "wordnet", "stopwords", "averaged_perceptron_tagger"])
+
+# Regular expression for finding URLs in messages
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def load_data(database_filepath):
+"""
+Loads dataset from sqllite database and splits it into training and test data.
+"""
     engine = create_engine('sqlite:///'+database_filepath )
     df = pd.read_sql_table("MessageData", engine)
     
@@ -41,7 +47,16 @@ def load_data(database_filepath):
     return X, Y, category_names
 
 def build_model():
-
+"""
+Builds a pipeline to create a classification model. 
+The pipeline
+- Tokenizes the phrases and counts the single tokens.
+- Calculates the TF-IDF value for each token
+- Calculates the length of each message phrase (number of letters)
+- Determines whether the starting token of a phrase is a verb
+- Uses multilabel classification to determine the categories of the phrases (using the RandomForestClassifier)
+- Uses grid search to optimize the classifier. 
+"""
     pipeline = Pipeline([
         ("features", FeatureUnion([
             ("nlp_pipeline", Pipeline([
@@ -65,6 +80,12 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+"""
+Tests the trained model on test data and compares the predicted result on the real category labelling.
+Prints out the optimal grid search parameters of the training.
+Calculates the overall accuracy on all categories. 
+Prints out a classification report for every category. 
+"""
     Y_pred=pd.DataFrame(model.predict(X_test))
     Y_pred.columns=category_names
     
@@ -80,11 +101,17 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+"""
+Saves the created model to a .pkl file. 
+"""
     file = open(model_filepath, "wb")
     s = pickle.dump(model, file)
     file.close()
 
 def main():
+"""
+Executes the training, testing and saving of the classification model. 
+"""
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
