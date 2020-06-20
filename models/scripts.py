@@ -11,14 +11,14 @@ from sklearn.base import TransformerMixin
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def tokenize(text):
-"""
-Tokenize method. Executes the following tasks:
-- Replacement of URLs in messages
-- Removal of punctuation in phrases
-- Conversion to lower case
-- Word tokenization
-- Lemmatization
-"""
+    """
+    Tokenize method. Executes the following tasks:
+    - Replacement of URLs in messages
+    - Removal of punctuation in phrases
+    - Conversion to lower case
+    - Word tokenization
+    - Lemmatization
+    """
     found_urls=re.findall(url_regex, text)
     for pos in found_urls:
         text=text.replace(pos, "urlplaceholder")
@@ -41,11 +41,11 @@ class StartingVerbExtractor(BaseEstimator, TransformerMixin):
     """
     
     def starting_verb(self, text):
-    """
-    Determines whether the starting word of a phrase is a verb.
-    
-    Tokenizes the phrase, tags the words and checks whether the starting word is a verb.    
-    """        
+        """
+        Determines whether the starting word of a phrase is a verb.
+
+        Tokenizes the phrase, tags the words and checks whether the starting word is a verb.    
+        """        
         sentence_list = nltk.sent_tokenize(text)
         for sentence in sentence_list:
             pos_tags = nltk.pos_tag(tokenize(sentence))
@@ -58,15 +58,15 @@ class StartingVerbExtractor(BaseEstimator, TransformerMixin):
         return False
 
     def fit(self, X, y=None):
-    """
-    Dummy fit method.
-    """
+        """
+        Dummy fit method.
+        """
         return self
 
     def transform(self, X):
-    """
-    Transform method. Executes the starting_verb method for all phrases. 
-    """
+        """
+        Transform method. Executes the starting_verb method for all phrases. 
+        """
         X_tagged = pd.Series(X).apply(self.starting_verb)
         return pd.DataFrame(X_tagged)
         
@@ -74,19 +74,19 @@ class StartingVerbExtractor(BaseEstimator, TransformerMixin):
 class TextLengthExtractor(BaseEstimator, TransformerMixin):
     """
     Text length extractor.
-    
+
     Determines the length of a phrase.
     """
     
     def fit(self, X, y=None):
-    """
-    Dummy fit method.
-    """
+        """
+        Dummy fit method.
+        """
         return self
 
     def transform(self, X):
-    """
-    Determines the string length for all given message phrases.
-    """
+        """
+        Determines the string length for all given message phrases.
+        """
         X_len = X.str.len()
         return pd.DataFrame(X_len)
